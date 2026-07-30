@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #5B8DEF;
+  --color-primary-light: #E8F0FE;
+  --color-primary-dark: #4A7AD4;
+  --color-success: #52C41A;
+  --color-warning: #FAAD14;
+  --color-error: #FF6B6B;
+  --color-bg: #F0F4FF;
+  --color-card: #FFFFFF;
+  --color-text: #2D3436;
+  --color-text-secondary: #636E72;
+  --color-border: #E8ECF1;
+  --color-literacy: #5B8DEF;
+  --color-pinyin: #00B894;
+  --color-math: #E17055;
+  --color-reading: #6C5CE7;
+  --color-writing: #FD79A8;
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 4px 20px rgba(0,0,0,0.10);
+  --radius-card: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #root { height: 100%; overflow: hidden; }
+
+body {
+  background: linear-gradient(135deg, #F0F4FF 0%, #FFF5F5 50%, #F0FFF8 100%);
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--color-text);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 卡片 */
+.card-soft {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.card-soft:hover { box-shadow: var(--shadow-card-hover); }
+
+/* 按钮 */
+.btn-child {
+  min-width: 34px; min-height: 34px;
+  border-radius: 8px; font-size: 14px;
+  cursor: pointer; border: none;
+  transition: all 0.15s ease-out;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.btn-child:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.btn-child:active { transform: scale(0.96); }
+
+/* 大字展示 */
+.char-display { font-size: 200px; font-family: "KaiTi","STKaiti","楷体",serif; line-height: 1; text-align: center; }
+.char-medium { font-size: 80px; font-family: "KaiTi","STKaiti","楷体",serif; line-height: 1; }
+.char-small { font-size: 40px; font-family: "KaiTi","STKaiti","楷体",serif; line-height: 1; }
+
+/* 动画 */
+@keyframes star-pop { 0%{transform:scale(0);opacity:0} 50%{transform:scale(1.3);opacity:1} 100%{transform:scale(1);opacity:1} }
+.star-pop { animation: star-pop 0.4s ease-out forwards; }
+
+@keyframes gentle-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+.gentle-shake { animation: gentle-shake 0.3s ease-out; }
+
+@keyframes correct-bounce { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+.correct-bounce { animation: correct-bounce 0.3s ease-out; }
+
+@keyframes confetti-fall { 0%{transform:translateY(-100%) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+@keyframes float-up { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-40px) scale(0.5)} }
+.float-up { animation: float-up 1s ease-out forwards; }
+
+@keyframes slide-in { 0%{opacity:0;transform:translateX(20px)} 100%{opacity:1;transform:translateX(0)} }
+.slide-in { animation: slide-in 0.3s ease-out; }
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
