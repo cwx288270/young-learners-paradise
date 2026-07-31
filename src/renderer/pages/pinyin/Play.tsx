@@ -318,18 +318,19 @@ export default function PinyinPlay() {
           })}
         </div>
 
-        {/* 反馈 */}
-        {feedback === 'correct' && (
-          <div className="mt-4 text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
-        )}
-        {feedback === 'error' && (
-          <div className="mt-4 text-center animate-[slide-in_0.3s_ease-out]">
-            <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>再想想哦～</div>
-            <div className="text-xs text-gray-500">
-              正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{q.options[q.correctIndex]}</span>
+        <div className="mt-3" style={{ minHeight: '60px' }}>
+          {feedback === 'correct' && (
+            <div className="text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
+          )}
+          {feedback === 'error' && (
+            <div className="text-center animate-[slide-in_0.3s_ease-out]">
+              <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>再想想哦～</div>
+              <div className="text-xs text-gray-500">
+                正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{q.options[q.correctIndex]}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

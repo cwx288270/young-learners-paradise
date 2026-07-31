@@ -82,17 +82,22 @@ export default function MathLearn() {
   const [feedback, setFeedback] = useState<'correct' | 'error' | null>(null)
   const [wrongCount, setWrongCount] = useState(0)
   const [showRhyme, setShowRhyme] = useState(!!category?.rhyme)
+  const [shuffledOptions, setShuffledOptions] = useState<string[]>([])
 
   const current = items[currentIdx]
   const totalItems = items.length
   const hasOptions = current?.options && current.options.length > 0
 
-  // Auto-speak
+  // Auto-speak and shuffle options
   useEffect(() => {
     if (!current) return
     setWrongCount(0)
     const text = current.question || current.title
     setTimeout(() => speakText(text, 0.7), 300)
+    // 随机打乱选项顺序
+    if (current.options?.length > 0) {
+      setShuffledOptions([...current.options].sort(() => Math.random() - 0.5))
+    }
   }, [currentIdx, current])
 
   const handleSelect = useCallback((option: string) => {
@@ -243,7 +248,7 @@ export default function MathLearn() {
         {/* 选项 */}
         {hasOptions ? (
           <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-            {current.options.map((option, i) => {
+            {shuffledOptions.map((option, i) => {
               let borderColor = '#E8ECF1'
               let bgColor = '#fff'
               let anim = ''
@@ -275,17 +280,19 @@ export default function MathLearn() {
           </button>
         )}
 
-        {/* 反馈 */}
-        {feedback === 'correct' && (
-          <div className="mt-4 text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
-        )}
-        {feedback === 'error' && (
-          <div className="mt-4 text-center animate-[slide-in_0.3s_ease-out]">
-            <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>
-              {wrongCount >= 2 ? `正确答案是 ${String(current.answer)}` : '再想想哦～'}
+        {/* 反馈 — 预留空间防止布局抖动 */}
+        <div className="mt-3" style={{ minHeight: '36px' }}>
+          {feedback === 'correct' && (
+            <div className="text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
+          )}
+          {feedback === 'error' && (
+            <div className="text-center animate-[slide-in_0.3s_ease-out]">
+              <div className="text-sm font-bold" style={{ color: '#FF6B6B' }}>
+                {wrongCount >= 2 ? `正确答案是 ${String(current.answer)}` : '再想想哦～'}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

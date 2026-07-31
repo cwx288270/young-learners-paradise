@@ -48,12 +48,15 @@ export function getEncouragement(score: number): string {
 }
 
 // Web Speech API封装
+
 // 获取中文语音
 let zhVoice: SpeechSynthesisVoice | null = null
+let voicesLoaded = false
 
 function getChineseVoice(): SpeechSynthesisVoice | null {
-  if (zhVoice) return zhVoice
+  if (zhVoice && voicesLoaded) return zhVoice
   const voices = window.speechSynthesis.getVoices()
+  if (voices.length > 0) voicesLoaded = true
   // 优先 zh-CN，其次 zh，再找包含"中文"或"Chinese"的
   zhVoice = voices.find(v => v.lang === 'zh-CN')
     || voices.find(v => v.lang.startsWith('zh'))
@@ -62,15 +65,59 @@ function getChineseVoice(): SpeechSynthesisVoice | null {
   return zhVoice
 }
 
-// 确保语音列表已加载（Chrome 异步加载）
-function ensureVoices(): Promise<SpeechSynthesisVoice[]> {
+// 确保语音列表已加载（Chrome/Android WebView 异步加载）
+// Android 上可能需要多次尝试
+async function ensureVoices(): Promise<SpeechSynthesisVoice[]> {
   const voices = window.speechSynthesis.getVoices()
-  if (voices.length > 0) return Promise.resolve(voices)
+  if (voices.length > 0 && !voicesLoaded) {
+    voicesLoaded = true
+  }
+  if (voices.length > 0) return voices
+
   return new Promise(resolve => {
-    window.speechSynthesis.onvoiceschanged = () => {
-      resolve(window.speechSynthesis.getVoices())
+    let attempts = 0
+    const maxAttempts = 20 // 最多等 2 秒
+    const check = () => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) {
+        voicesLoaded = true
+        resolve(v)
+        return
+      }
+      attempts++
+      if (attempts >= maxAttempts) {
+        voicesLoaded = true
+        resolve(v) // 返回空数组
+        return
+      }
+      setTimeout(check, 100)
     }
+    // 同时监听 voiceschanged 事件
+    window.speechSynthesis.onvoiceschanged = () => {
+      voicesLoaded = true
+      const v = window.speechSynthesis.getVoices()
+      resolve(v)
+    }
+    // 开始轮询
+    check()
   })
+}
+
+// 预热语音引擎 — 在用户首次交互时调用
+let speechWarmedUp = false
+export function warmUpSpeech(): void {
+  if (speechWarmedUp || !('speechSynthesis' in window)) return
+  // Android WebView 需要用户手势后才能激活语音
+  const utterance = new SpeechSynthesisUtterance('')
+  utterance.volume = 0
+  utterance.rate = 1
+  try {
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+    speechWarmedUp = true
+  } catch {
+    // 忽略预热失败
+  }
 }
 
 export async function speakText(text: string, rate = 0.8): Promise<void> {
@@ -93,6 +140,10 @@ export async function speakText(text: string, rate = 0.8): Promise<void> {
   utterance.rate = rate
   utterance.pitch = 1.1
   if (voice) utterance.voice = voice
+
+  // Android WebView 有时在后台暂停语音，设置 volume=1 确保可听
+  utterance.volume = 1
+
   window.speechSynthesis.speak(utterance)
 }
 

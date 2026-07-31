@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../../stores/useUserStore'
 import { useProgressStore } from '../../stores/useProgressStore'
@@ -38,8 +38,15 @@ export default function MathPlay() {
   const [wrongAnswers, setWrongAnswers] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [shuffledOpts, setShuffledOpts] = useState<string[]>([])
 
   const q = questions[currentQ]
+
+  useEffect(() => {
+    if (q?.options?.length > 0) {
+      setShuffledOpts([...q.options].sort(() => Math.random() - 0.5))
+    }
+  }, [currentQ, q])
 
   const handleSelect = useCallback((option: string) => {
     if (selected !== null) return
@@ -187,7 +194,7 @@ export default function MathPlay() {
 
         {/* 选项 */}
         <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-          {q.options.map((option, i) => {
+          {shuffledOpts.map((option, i) => {
             let borderColor = '#E8ECF1'
             let bgColor = '#fff'
             let anim = ''
@@ -212,20 +219,21 @@ export default function MathPlay() {
           })}
         </div>
 
-        {/* 反馈 */}
-        {feedback === 'correct' && (
-          <div className="mt-4 text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">
-            ✓ 太棒了！往上爬！
-          </div>
-        )}
-        {feedback === 'error' && (
-          <div className="mt-4 text-center animate-[slide-in_0.3s_ease-out]">
-            <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>哎呀，滑了一下！</div>
-            <div className="text-xs text-gray-500">
-              正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{q.answer}</span>
+        <div className="mt-3" style={{ minHeight: '36px' }}>
+          {feedback === 'correct' && (
+            <div className="text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">
+              ✓ 太棒了！往上爬！
             </div>
-          </div>
-        )}
+          )}
+          {feedback === 'error' && (
+            <div className="text-center animate-[slide-in_0.3s_ease-out]">
+              <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>哎呀，滑了一下！</div>
+              <div className="text-xs text-gray-500">
+                正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{String(q.answer)}</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* 计分 */}
         <div className="flex gap-3 mt-6">

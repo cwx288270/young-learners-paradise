@@ -23,6 +23,21 @@ export default function ReadingStory() {
   const [score, setScore] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [showCele, setShowCele] = useState(false)
+  const [shuffledOpts, setShuffledOpts] = useState<string[]>([])
+  const [correctIdx, setCorrectIdx] = useState(0)
+
+  // Shuffle options when question changes
+  useEffect(() => {
+    if (phase === 'questions') {
+      const q = story.questions[currentQ]
+      if (q) {
+        const pairs = q.options.map((opt, i) => ({ opt, i }))
+        pairs.sort(() => Math.random() - 0.5)
+        setShuffledOpts(pairs.map(p => p.opt))
+        setCorrectIdx(pairs.findIndex(p => p.i === q.answer))
+      }
+    }
+  }, [phase, currentQ])
 
   const totalPages = story.content.length
   const totalQuestions = story.questions.length
@@ -40,7 +55,7 @@ export default function ReadingStory() {
     setSelected(idx)
 
     const q = story.questions[currentQ]
-    const isCorrect = idx === q.answer
+    const isCorrect = idx === correctIdx
     setFeedback(isCorrect ? 'correct' : 'error')
     if (isCorrect) setScore(s => s + 1)
 
@@ -186,7 +201,7 @@ export default function ReadingStory() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-          {q.options.map((option, i) => {
+          {shuffledOpts.map((option, i) => {
             let borderColor = '#E8ECF1'
             let bgColor = '#fff'
             let anim = ''
@@ -194,7 +209,7 @@ export default function ReadingStory() {
               borderColor = '#52C41A'; bgColor = '#F0FFF0'; anim = 'correct-bounce'
             } else if (selected === i && feedback === 'error') {
               borderColor = '#FF6B6B'; bgColor = '#FFF0F0'; anim = 'gentle-shake'
-            } else if (feedback !== null && i === q.answer) {
+            } else if (feedback !== null && i === correctIdx) {
               borderColor = '#52C41A'; bgColor = '#F0FFF0'
             }
             return (
@@ -209,17 +224,19 @@ export default function ReadingStory() {
           })}
         </div>
 
-        {feedback === 'correct' && (
-          <div className="mt-4 text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
-        )}
-        {feedback === 'error' && (
-          <div className="mt-4 text-center animate-[slide-in_0.3s_ease-out]">
-            <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>再想想哦～</div>
-            <div className="text-xs text-gray-500">
-              正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{q.options[q.answer]}</span>
+        <div className="mt-3" style={{ minHeight: '36px' }}>
+          {feedback === 'correct' && (
+            <div className="text-[#52C41A] text-lg font-bold animate-[star-pop_0.3s_ease-out]">✓ 太棒了！</div>
+          )}
+          {feedback === 'error' && (
+            <div className="text-center animate-[slide-in_0.3s_ease-out]">
+              <div className="text-sm font-bold mb-1" style={{ color: '#FF6B6B' }}>再想想哦～</div>
+              <div className="text-xs text-gray-500">
+                正确答案：<span className="font-bold" style={{ color: '#52C41A' }}>{shuffledOpts[correctIdx]}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
