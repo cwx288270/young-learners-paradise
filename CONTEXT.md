@@ -20,7 +20,7 @@
 | 状态管理 | Zustand 5 (4 stores) |
 | UI | Tailwind CSS 3 |
 | 动画 | Framer Motion 11 |
-| 语音 | @capacitor-community/text-to-speech (Android 原生) + Web Speech API (fallback) |
+| 语音 | @capacitor-community/text-to-speech (Android 原生 TTS 静态导入) + Web Speech API (web fallback) |
 | 数据库 | capacitor-community/sqlite (Android) / better-sqlite3 (Electron) / localStorage (fallback) |
 | CI/CD | GitHub Actions → 自动构建 APK |
 
@@ -88,7 +88,9 @@ const items = useProgressStore(s => s.progress.filter(...))
 | 状态栏遮挡顶部按钮 | WebView 未适配安全区域 | styles.xml 透明状态栏 + CSS `env(safe-area-inset-*)` |
 | 导航栏遮挡底部按钮 | 同上 | MainActivity.java `setDecorFitsSystemWindows(false)` |
 | 屏幕旋转内容错乱 | 未锁定方向 | AndroidManifest.xml `screenOrientation="portrait"` + Java 代码双保险 |
-| 语音朗读失效 | Web Speech API 在 Android 不可靠 | 改用 `@capacitor-community/text-to-speech` 原生 TTS |
+| 语音朗读失效 | Web Speech API 在 Android WebView 不可用 | 改用 `@capacitor-community/text-to-speech` 原生 TTS 静态导入 |
+| TTS 动态 import 代码分割 | Vite 将动态 import 分离为独立 chunk，WebView 可能加载失败 | 改为静态 import，TTS 插件直接打包进主 bundle |
+| MuMu 模拟器拼音无声 | MuMu 12 无 TTS 引擎 + WebView 不支持 speechSynthesis | 真机测试正常；添加 `checkChineseTTS()` 和 `openTTSInstall()` 兜底 |
 
 ### 6.2 交互相关
 | 问题 | 根因 | 修复 |
@@ -153,8 +155,24 @@ const shuffled = useMemo(() =>
 ### voice 调用
 ```typescript
 import { speakText } from '../../utils/helpers'
-speakText(text, rate) // Android 用原生 TTS, 其他用 Web Speech
+speakText(text, rate) // Android 用原生 TTS(静态导入), Web 用 Web Speech API
 ```
+
+**TTS 架构**（helpers.ts）:
+- 静态导入 `import { TextToSpeech } from '@capacitor-community/text-to-speech'`（不再动态 import，避免代码分割）
+- `speakText()`: 先尝试原生 TTS → 失败则走 Web Speech API
+- `warmUpSpeech()`: 首次点击时预热引擎
+- `checkChineseTTS()`: 检测 zh-CN 语言是否可用
+- `openTTSInstall()`: 引导安装系统 TTS 语音数据
+- 诊断日志: `window.__ttsDiag` 数组记录完整 TTS 调用链路
+
+**平台兼容性**:
+| 环境 | 原生 TTS | Web Speech | 结果 |
+|------|---------|------------|------|
+| 国产真机(小米/华为/OPPO) | ✅ 预装讯飞引擎 | ❌ WebView 不支持 | ✅ 正常 |
+| MuMu 模拟器 | ❌ 无 TTS 引擎 | ❌ WebView 不支持 | ❌ 需装 Google TTS |
+| 海外真机/原生Android | ⚠️ 需装引擎 | ❌ WebView 不支持 | ⚠️ 引导安装 |
+| 桌面浏览器 | — | ✅ Chrome/Edge 支持 | ✅ 正常 |
 
 ## 九、数据流
 
@@ -171,4 +189,7 @@ Stores 优先级: SQLite → localStorage → 内存
 
 - 需要时读取 `docs/01-prd/产品功能文档.md` 和 `docs/03-architecture/技术设计文档.md`
 - APK 下载: GitHub Actions → Artifacts
-- 测试: MuMu 模拟器拖拽 APK 安装
+- 测试: MuMu 模拟器拖拽 APK 安装（注意：MuMu 缺少 TTS 引擎，需装 Google TTS APK 才能测试语音）
+- 真机: 国产手机（小米/华为/OPPO）自带 TTS 引擎，语音功能正常
+- 拼音岛 `/pinyin` 管理员模式下有内置 TTS 诊断面板（展开 🔧 TTS 诊断面板）
+- GitHub Push 注意: CONTEXT.md 中勿含真实 Token（会触发 secret scanning 拦截）
