@@ -191,5 +191,40 @@ Stores 优先级: SQLite → localStorage → 内存
 - APK 下载: GitHub Actions → Artifacts
 - 测试: MuMu 模拟器拖拽 APK 安装（注意：MuMu 缺少 TTS 引擎，需装 Google TTS APK 才能测试语音）
 - 真机: 国产手机（小米/华为/OPPO）自带 TTS 引擎，语音功能正常
-- 拼音岛 `/pinyin` 管理员模式下有内置 TTS 诊断面板（展开 🔧 TTS 诊断面板）
+- 拼音岛 `/pinyin` TTS 诊断面板已移除（2026-07-31）
 - GitHub Push 注意: CONTEXT.md 中勿含真实 Token（会触发 secret scanning 拦截）
+
+## 十一、内容扩充记录（2026-07-31）
+
+### 11.1 数学模块（~576 → ~1800+ 题）
+- 新增6个内容文件：`comparison.ts`（比大小）、`decomposition.ts`（数的分成）、`multiplication.ts`（乘法启蒙）、`numbers100.ts`（数字51-100）、`timeMoney.ts`（时间货币）、`measurement.ts`（测量比较）
+- 扩展7个现有文件：补全加减法组合、addSub50扩展至100以内、图形+15题、规律+20题、应用题+30题
+- `math/index.ts` 关卡从10级重组为21级
+- `types/index.ts` MathData.type 新增6个值
+
+### 11.2 拼音模块
+- 音节表：113 → ~350个（按声母×韵母矩阵系统性补全）
+- 声调练习：20 → ~60个（新增混淆对比组、双音节模式、轻声）
+- 儿歌：6 → 15首
+
+### 11.3 阅读模块
+- 22篇 → 41篇故事，88 → ~180道理解题
+- 新增一级6篇、二级5篇、三级4篇、四级4篇（进阶成语寓言）
+
+### 11.4 识字模块
+- `COMMON_FIRST` 从150字扩充至300字
+
+### 11.5 写字模块
+- 新建 `content/writing.ts`，笔画/字源数据从组件移入内容层
+- 笔画指导：~20 → ~100字，字源演变：~26 → 50字
+- `Draw.tsx` 和 `Learn.tsx` 改为从 content/writing 导入
+
+## 十二、APK 自动更新功能（2026-07-31）
+
+- 自定义 Capacitor 插件 `AppUpdaterPlugin.java`：下载 APK 到缓存并通过 FileProvider 调起系统安装器
+- `utils/updater.ts`：调用 GitHub Releases API 检查最新版本，对比本地版本号
+- 首页（`Home.tsx`）：管理员模式下自动检测更新，显示下载进度横幅
+- CI（`build-apk.yml`）：push 时自动构建 APK 并发布 GitHub Release
+- 版本号在 `package.json` 和 `updater.ts` 的 `APP_VERSION` 中同步
+- 新增权限：`REQUEST_INSTALL_PACKAGES`（Android 8+ 安装 APK 必须）
+- FileProvider 已配置，APK 通过 `content://` URI 共享给安装器
