@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build & Release APK
 
 on:
   push:
@@ -42,8 +42,28 @@ jobs:
             chmod +x gradlew
             ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Get version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Rename APK with version
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk young-learners-v${{ steps.version.outputs.version }}.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: young-learners-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: young-learners-v${{ steps.version.outputs.version }}.apk
+
+      - name: Create Release & Upload APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: young-learners-v${{ steps.version.outputs.version }}.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

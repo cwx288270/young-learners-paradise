@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../stores/useUserStore'
 import { useProgressStore } from '../stores/useProgressStore'
 import { useAdminStore } from '../stores/useAdminStore'
 import { MODULES } from '../content/index'
+import { checkForUpdate, installUpdate, type UpdateInfo } from '../utils/updater'
 
 const MODULE_ROUTES: Record<string, string> = {
   character: "/character", pinyin: "/pinyin",
@@ -23,12 +24,35 @@ const Home: React.FC = () => {
   const { currentChild } = useUserStore()
   const { loadProgress, loadDailyStats, dailyStats, progress, totalStars, consecutiveDays } = useProgressStore()
   const { isAdmin, toggleAdmin } = useAdminStore()
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [updating, setUpdating] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
 
   useEffect(() => {
     if (!currentChild) { navigate('/login'); return }
     loadProgress(currentChild.id)
     loadDailyStats(currentChild.id)
   }, [currentChild, navigate, loadProgress, loadDailyStats])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    checkForUpdate().then(info => {
+      if (info.hasUpdate) setUpdateInfo(info)
+    })
+  }, [isAdmin])
+
+  const handleUpdate = async () => {
+    if (!updateInfo?.downloadUrl || updating) return
+    setUpdating(true)
+    try {
+      await installUpdate(updateInfo.downloadUrl, (progress) => {
+        setDownloadProgress(progress)
+      })
+    } catch (e: any) {
+      console.error('Update failed:', e)
+      setUpdating(false)
+    }
+  }
 
   const learnedCount = useMemo(() => progress.filter(p => p.status !== 'new').length, [progress])
   const totalSeconds = dailyStats?.total_time ?? 0
@@ -55,6 +79,30 @@ const Home: React.FC = () => {
           <button onClick={toggleAdmin}
             className="px-3 py-1.5 rounded-lg bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition-all border border-white/30">
             退出
+          </button>
+        </div>
+      )}
+
+      {/* 版本更新横幅 */}
+      {isAdmin && updateInfo?.hasUpdate && (
+        <div className="mx-5 mt-3 px-4 py-3 rounded-xl flex items-center justify-between shrink-0"
+          style={{ background: 'linear-gradient(135deg, #0984E3, #74B9FF)', boxShadow: '0 2px 12px rgba(9,132,227,0.3)' }}>
+          <div>
+            <div className="text-white text-sm font-bold">发现新版本 {updateInfo.latestVersion}</div>
+            {updating ? (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-20 h-1.5 bg-white/30 rounded-full overflow-hidden">
+                  <div className="h-full bg-white rounded-full transition-all" style={{ width: `${downloadProgress}%` }} />
+                </div>
+                <span className="text-white/70 text-xs">{downloadProgress}%</span>
+              </div>
+            ) : (
+              <div className="text-white/70 text-xs mt-0.5">点击更新下载最新版本</div>
+            )}
+          </div>
+          <button onClick={handleUpdate} disabled={updating}
+            className="px-4 py-1.5 rounded-lg bg-white text-blue-500 text-sm font-bold hover:bg-blue-50 transition-all disabled:opacity-50">
+            {updating ? '下载中...' : '立即更新'}
           </button>
         </div>
       )}
