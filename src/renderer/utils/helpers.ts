@@ -103,34 +103,64 @@ async function ensureVoices(): Promise<SpeechSynthesisVoice[]> {
   })
 }
 
-// 预热语音引擎 — 在用户首次交互时调用
+// 检测运行环境
+function isCapacitor(): boolean {
+  return typeof (window as any)?.Capacitor !== 'undefined'
+}
+
+// 预热语音引擎 — 在用户首次交互时调用（Android 需要）
 let speechWarmedUp = false
-export function warmUpSpeech(): void {
-  if (speechWarmedUp || !('speechSynthesis' in window)) return
-  // Android WebView 需要用户手势后才能激活语音
+export async function warmUpSpeech(): Promise<void> {
+  if (speechWarmedUp) return
+  speechWarmedUp = true
+
+  if (isCapacitor()) {
+    // Android 原生 TTS：预热即测试一次空语音
+    try {
+      const { TextToSpeech } = await import('@capacitor-community/text-to-speech')
+      await TextToSpeech.speak({ text: ' ', lang: 'zh-CN', rate: 1.0, pitch: 1.0 })
+    } catch { /* 忽略预热错误 */ }
+    return
+  }
+
+  // Web Speech API 预热
+  if (!('speechSynthesis' in window)) return
   const utterance = new SpeechSynthesisUtterance('')
   utterance.volume = 0
-  utterance.rate = 1
   try {
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
-    speechWarmedUp = true
-  } catch {
-    // 忽略预热失败
-  }
+  } catch { /* 忽略预热错误 */ }
 }
 
 export async function speakText(text: string, rate = 0.8): Promise<void> {
-  if (!('speechSynthesis' in window)) return
-
-  window.speechSynthesis.cancel()
-
   // 数学符号转中文读法
   const spoken = text
     .replace(/ - /g, '减')
     .replace(/ \+ /g, '加')
     .replace(/ = /g, '等于')
     .replace(/\?/g, '多少')
+
+  // Android/Capacitor：使用原生 TTS（最可靠）
+  if (isCapacitor()) {
+    try {
+      const { TextToSpeech } = await import('@capacitor-community/text-to-speech')
+      await TextToSpeech.speak({
+        text: spoken,
+        lang: 'zh-CN',
+        rate: rate,
+        pitch: 1.1,
+      })
+      return
+    } catch (err) {
+      console.warn('Native TTS failed, falling back to Web Speech:', err)
+      // 继续走 Web Speech API fallback
+    }
+  }
+
+  // Web Speech API fallback
+  if (!('speechSynthesis' in window)) return
+  window.speechSynthesis.cancel()
 
   await ensureVoices()
   const voice = getChineseVoice()
@@ -139,10 +169,8 @@ export async function speakText(text: string, rate = 0.8): Promise<void> {
   utterance.lang = 'zh-CN'
   utterance.rate = rate
   utterance.pitch = 1.1
-  if (voice) utterance.voice = voice
-
-  // Android WebView 有时在后台暂停语音，设置 volume=1 确保可听
   utterance.volume = 1
+  if (voice) utterance.voice = voice
 
   window.speechSynthesis.speak(utterance)
 }

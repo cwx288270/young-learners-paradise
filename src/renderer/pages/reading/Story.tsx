@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useUserStore } from '../../stores/useUserStore'
 import { useProgressStore } from '../../stores/useProgressStore'
@@ -23,21 +23,19 @@ export default function ReadingStory() {
   const [score, setScore] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [showCele, setShowCele] = useState(false)
-  const [shuffledOpts, setShuffledOpts] = useState<string[]>([])
-  const [correctIdx, setCorrectIdx] = useState(0)
 
-  // Shuffle options when question changes
-  useEffect(() => {
-    if (phase === 'questions') {
-      const q = story.questions[currentQ]
-      if (q) {
-        const pairs = q.options.map((opt, i) => ({ opt, i }))
-        pairs.sort(() => Math.random() - 0.5)
-        setShuffledOpts(pairs.map(p => p.opt))
-        setCorrectIdx(pairs.findIndex(p => p.i === q.answer))
-      }
+  // 同步随机打乱选项
+  const { shuffledOpts, correctIdx } = useMemo(() => {
+    if (phase !== 'questions') return { shuffledOpts: [] as string[], correctIdx: 0 }
+    const q = story.questions[currentQ]
+    if (!q) return { shuffledOpts: [] as string[], correctIdx: 0 }
+    const pairs = q.options.map((opt, i) => ({ opt, i }))
+    pairs.sort(() => Math.random() - 0.5)
+    return {
+      shuffledOpts: pairs.map(p => p.opt),
+      correctIdx: pairs.findIndex(p => p.i === q.answer),
     }
-  }, [phase, currentQ])
+  }, [phase, currentQ, story.questions])
 
   const totalPages = story.content.length
   const totalQuestions = story.questions.length

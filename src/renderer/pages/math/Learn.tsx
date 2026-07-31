@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useUserStore } from '../../stores/useUserStore'
 import { useProgressStore } from '../../stores/useProgressStore'
@@ -82,22 +82,23 @@ export default function MathLearn() {
   const [feedback, setFeedback] = useState<'correct' | 'error' | null>(null)
   const [wrongCount, setWrongCount] = useState(0)
   const [showRhyme, setShowRhyme] = useState(!!category?.rhyme)
-  const [shuffledOptions, setShuffledOptions] = useState<string[]>([])
 
   const current = items[currentIdx]
   const totalItems = items.length
   const hasOptions = current?.options && current.options.length > 0
 
-  // Auto-speak and shuffle options
+  // 同步随机打乱选项
+  const shuffledOptions = useMemo(() => {
+    if (!current?.options?.length) return [] as string[]
+    return [...current.options].sort(() => Math.random() - 0.5)
+  }, [current])
+
+  // Auto-speak
   useEffect(() => {
     if (!current) return
     setWrongCount(0)
     const text = current.question || current.title
     setTimeout(() => speakText(text, 0.7), 300)
-    // 随机打乱选项顺序
-    if (current.options?.length > 0) {
-      setShuffledOptions([...current.options].sort(() => Math.random() - 0.5))
-    }
   }, [currentIdx, current])
 
   const handleSelect = useCallback((option: string) => {

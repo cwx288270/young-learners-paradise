@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../../stores/useUserStore'
 import { useProgressStore } from '../../stores/useProgressStore'
@@ -38,15 +38,14 @@ export default function MathPlay() {
   const [wrongAnswers, setWrongAnswers] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
-  const [shuffledOpts, setShuffledOpts] = useState<string[]>([])
 
   const q = questions[currentQ]
 
-  useEffect(() => {
-    if (q?.options?.length > 0) {
-      setShuffledOpts([...q.options].sort(() => Math.random() - 0.5))
-    }
-  }, [currentQ, q])
+  // 同步随机打乱选项
+  const shuffledOpts = useMemo(() => {
+    if (!q?.options?.length) return [] as string[]
+    return [...q.options].sort(() => Math.random() - 0.5)
+  }, [q])
 
   const handleSelect = useCallback((option: string) => {
     if (selected !== null) return
