@@ -110,7 +110,7 @@ export interface TonePractice {
 // 数学内容
 export interface MathData {
   id: string
-  type: 'number' | 'counting' | 'addition' | 'subtraction' | 'shape' | 'pattern' | 'word'
+  type: 'number' | 'counting' | 'addition' | 'subtraction' | 'shape' | 'pattern' | 'word' | 'comparison' | 'decomposition' | 'multiplication' | 'time' | 'money' | 'measurement'
   title: string
   level: number
   question: string

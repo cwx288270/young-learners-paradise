@@ -5,33 +5,7 @@ import { useProgressStore } from '../../stores/useProgressStore'
 import { CHARACTERS, getCharacterByChar } from '../../content/characters'
 import { speakText } from '../../utils/helpers'
 import PinyinText from '../../components/common/PinyinText'
-
-const STROKE_NOTES: Record<string, string> = {
-  '一': '从左到右，一笔写成',
-  '二': '先写上横，再写下横，共2笔',
-  '三': '先上横，再中横，后下横，共3笔',
-  '十': '先写横，后写竖，共2笔',
-  '人': '先撇后捺，共2笔',
-  '大': '先横，再撇，后捺，共3笔',
-  '小': '先竖钩，再撇，后点，共3笔',
-  '上': '先竖，再横，后短横，共3笔',
-  '下': '先横，再竖，后点，共3笔',
-  '山': '先中竖，再竖折，后竖，共3笔',
-  '水': '先竖钩，再横撇，后撇捺，共4笔',
-  '火': '先点，再撇，后撇捺，共4笔',
-  '天': '先横，再横，后撇捺，共4笔',
-  '日': '先竖，再横折，后横，最后横，共4笔',
-  '月': '先撇，再横折钩，后横，最后横，共4笔',
-  '木': '先横，再竖，后撇捺，共4笔',
-  '口': '先竖，再横折，后横，共3笔',
-  '手': '先撇，再横，后横，最后竖钩，共4笔',
-  '目': '先竖，再横折，后横、横、横，共5笔',
-  '田': '先竖，再横折，后横、竖、横，共5笔',
-}
-
-function getStrokeNote(char: string): string {
-  return STROKE_NOTES[char] || `${char}：按笔顺从上到下、从左到右书写`
-}
+import { getStrokeNote } from '../../content/writing'
 
 export default function WritingDraw() {
   const navigate = useNavigate()

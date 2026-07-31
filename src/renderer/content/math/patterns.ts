@@ -35,4 +35,31 @@ export const PATTERNS: MathData[] = [
   { id: 'pat_logic_2', type: 'pattern', title: '数字推理2', level: 12, question: '1→3, 2→6, 3→9, 4→?', options: ['10', '11', '12', '8'], answer: '12', explanation: '每个数乘以3：1×3=3, 2×3=6, 3×3=9, 4×3=12' },
   { id: 'pat_logic_3', type: 'pattern', title: '数字推理3', level: 12, question: '10→5, 8→4, 6→3, 4→?', options: ['1', '2', '3', '0'], answer: '2', explanation: '每个数除以2：10÷2=5, 8÷2=4, 6÷2=3, 4÷2=2' },
   { id: 'pat_logic_4', type: 'pattern', title: '数字推理4', level: 12, question: '1→1, 2→4, 3→9, 4→?', options: ['12', '16', '8', '10'], answer: '16', explanation: '平方关系：1²=1, 2²=4, 3²=9, 4²=16' },
+
+  // ABB和复杂模式
+  { id: 'pat_abb_1', type: 'pattern', title: 'ABB规律', level: 12, question: '🔴🔵🔵🔴🔵🔵🔴？', options: ['🔵', '🔴', '🟡', '🟢'], answer: '🔵', explanation: '红蓝蓝 红蓝蓝 红蓝蓝...下一个是蓝' },
+  { id: 'pat_abb_2', type: 'pattern', title: 'ABB规律', level: 12, question: '★●●★●●★？', options: ['●', '★', '▲', '■'], answer: '●', explanation: '星圆圆 星圆圆 星圆圆...下一个是圆' },
+  { id: 'pat_aab_1', type: 'pattern', title: 'AAB规律', level: 12, question: '🔴🔴🔵🔴🔴🔵？', options: ['🔴', '🔵', '🟡', '🟢'], answer: '🔴', explanation: '红红蓝 红红蓝...下一个是红' },
+  { id: 'pat_aabb_1', type: 'pattern', title: 'AABB规律', level: 12, question: '□ □ △ △ □ □ △ △ □？', options: ['□', '△', '○', '☆'], answer: '□', explanation: '方方三角三角 方方三角三角 方...下一个是方' },
+
+  // 递增模式
+  { id: 'pat_grow_1', type: 'pattern', title: '递增规律', level: 12, question: '1, 4, 7, 10, ?, 16', options: ['12', '13', '14', '11'], answer: '13', explanation: '每次加3：1+3=4, 4+3=7, 7+3=10, 10+3=13, 13+3=16' },
+  { id: 'pat_grow_2', type: 'pattern', title: '递增规律', level: 12, question: '2, 6, 10, 14, ?', options: ['16', '18', '20', '15'], answer: '18', explanation: '每次加4：2+4=6, 6+4=10, 10+4=14, 14+4=18' },
+  { id: 'pat_grow_3', type: 'pattern', title: '递增规律', level: 12, question: '50, 45, 40, ?, 30, 25', options: ['38', '35', '32', '37'], answer: '35', explanation: '每次减5：50-5=45, 45-5=40, 40-5=35, 35-5=30' },
+  { id: 'pat_grow_4', type: 'pattern', title: '倍增规律', level: 12, question: '1, 2, 4, 8, ?', options: ['12', '16', '10', '14'], answer: '16', explanation: '每次翻倍：1×2=2, 2×2=4, 4×2=8, 8×2=16' },
+
+  // 颜色形状组合规律
+  { id: 'pat_combo_1', type: 'pattern', title: '颜色形状', level: 12, question: '红方 蓝圆 红方 蓝圆 ？', options: ['红方', '蓝圆', '红圆', '蓝方'], answer: '红方', explanation: '红方和蓝圆交替，接下来是红方' },
+  { id: 'pat_combo_2', type: 'pattern', title: '颜色形状', level: 12, question: '大圆 小圆 大圆 小圆 ？', options: ['大圆', '小圆', '中方', '大方'], answer: '大圆', explanation: '大小交替出现' },
+  { id: 'pat_combo_3', type: 'pattern', title: '双层规律', level: 12, question: '🔴① 🟡② 🔵③ 🔴④ ？', options: ['🟡⑤', '🔴⑤', '🔵④', '🟡④'], answer: '🟡⑤', explanation: '颜色：红黄蓝循环，编号递增：①②③④⑤' },
+
+  // 逻辑推理扩展
+  { id: 'pat_logic_5', type: 'pattern', title: '数字推理', level: 12, question: '3→7, 5→9, 8→12, 10→?', options: ['12', '13', '14', '15'], answer: '14', explanation: '每个数加4：3+4=7, 5+4=9, 8+4=12, 10+4=14' },
+  { id: 'pat_logic_6', type: 'pattern', title: '数字推理', level: 12, question: '2→1, 4→2, 6→3, 10→?', options: ['4', '5', '6', '3'], answer: '5', explanation: '每个数除以2：2÷2=1, 4÷2=2, 6÷2=3, 10÷2=5' },
+  { id: 'pat_logic_7', type: 'pattern', title: '数字推理', level: 12, question: '1+2=3, 3+4=7, 5+6=11, 7+8=?', options: ['15', '13', '17', '14'], answer: '15', explanation: '连续两数相加：7+8=15' },
+  { id: 'pat_logic_8', type: 'pattern', title: '数字推理', level: 12, question: '1, 1, 2, 3, 5, 8, ?', options: ['10', '13', '11', '9'], answer: '13', explanation: '前两个数相加：1+1=2, 1+2=3, 2+3=5, 3+5=8, 5+8=13（兔子数列）' },
+
+  // 位置规律
+  { id: 'pat_pos_1', type: 'pattern', title: '位置规律', level: 12, question: '上 中 下 上 中 ？', options: ['下', '上', '中', '左'], answer: '下', explanation: '上中下循环，下一个是下' },
+  { id: 'pat_pos_2', type: 'pattern', title: '方向规律', level: 12, question: '↑ → ↓ ← ↑ → ↓ ？', options: ['←', '↑', '→', '↓'], answer: '←', explanation: '顺时针方向循环：上右下左...' },
 ]

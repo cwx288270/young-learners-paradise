@@ -6,39 +6,7 @@ import { CHARACTERS } from '../../content/characters'
 import { speakText } from '../../utils/helpers'
 import type { CharacterData } from '../../types'
 import PinyinText from '../../components/common/PinyinText'
-
-const EVOLUTION_NOTES: Record<string, string> = {
-  '一': '由一根算筹横放的形象演变而来',
-  '二': '由两根横放的算筹演变而来',
-  '三': '由三根横放的算筹演变而来',
-  '十': '由一竖加一横的交叉形象演变而来',
-  '人': '由人的侧面形象演变而来',
-  '大': '像一个人张开双臂站立的样子',
-  '小': '由细小的沙粒形象演变而来',
-  '上': '由在一条线上方加标记演变而来',
-  '下': '由在一条线下方加标记演变而来',
-  '山': '由三座山峰的形状演变而来',
-  '水': '由流动的水流形象演变而来',
-  '火': '由火焰升腾的形状演变而来',
-  '天': '由人在头顶上方加一横演变而来',
-  '日': '由太阳的圆形演变而来，中间一点为光',
-  '月': '由弯月的形状演变而来',
-  '木': '由树的形状演变而来，上有枝下有根',
-  '口': '由嘴巴的张开形状演变而来',
-  '手': '由手的形状演变而来',
-  '目': '由眼睛的形状演变而来',
-  '田': '由田地的分割形状演变而来',
-  '石': '由山崖下有石块的形状演变而来',
-  '门': '由两扇门的形状演变而来',
-  '车': '由车的侧面轮廓演变而来',
-  '马': '由马的侧面形象演变而来',
-  '牛': '由牛头的正面形象演变而来',
-  '羊': '由羊头的正面形象演变而来',
-}
-
-function getEvolutionNote(char: string): string {
-  return EVOLUTION_NOTES[char] || `${char}：由古代象形文字演变而来`
-}
+import { getEvolutionNote } from '../../content/writing'
 
 function getInitialState(stateCharId: string | undefined, learnedCount: number) {
   if (stateCharId) {
