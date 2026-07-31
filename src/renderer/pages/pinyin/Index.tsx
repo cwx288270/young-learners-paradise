@@ -1,8 +1,96 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProgressStore } from '../../stores/useProgressStore'
 import { useAdminStore } from '../../stores/useAdminStore'
 import { SHENGMU, YUNMU, ZHENGTI } from '../../content/pinyin'
+import { speakText, checkChineseTTS, openTTSInstall } from '../../utils/helpers'
+
+function TTSDebugPanel() {
+  const [logs, setLogs] = useState<string[]>([])
+  const [ttsStatus, setTtsStatus] = useState<{ available: boolean; reason: string } | null>(null)
+  const [testing, setTesting] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const diag = (window as any).__ttsDiag as string[] | undefined
+      if (diag && diag.length > 0) setLogs([...diag].reverse().slice(0, 8))
+    }, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleCheckTTS = async () => {
+    setTesting(true)
+    try {
+      const result = await checkChineseTTS()
+      setTtsStatus(result)
+    } catch (e: any) {
+      setTtsStatus({ available: false, reason: `检查异常: ${e?.message || e}` })
+    }
+    setTesting(false)
+  }
+
+  const handleTestSpeak = async () => {
+    setTesting(true)
+    try {
+      await speakText('你好小朋友', 0.8)
+    } catch {}
+    setTesting(false)
+  }
+
+  const handleInstall = async () => {
+    await openTTSInstall()
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border overflow-hidden" style={{ borderColor: '#FF6B6B', backgroundColor: '#FFF5F5' }}>
+      <button onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between px-4 py-2.5 text-left">
+        <span className="text-sm font-bold" style={{ color: '#E17055' }}>🔧 TTS 诊断面板</span>
+        <span className="text-xs text-gray-400">{expanded ? '收起 ▲' : '展开 ▼'}</span>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-3 space-y-2">
+          {/* 状态检查按钮 */}
+          <div className="flex gap-2 flex-wrap">
+            <button onClick={handleCheckTTS} disabled={testing}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white border font-bold"
+              style={{ borderColor: '#E17055', color: '#E17055' }}>
+              {testing ? '...' : '🔍 检查中文TTS'}
+            </button>
+            <button onClick={handleTestSpeak} disabled={testing}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white border font-bold"
+              style={{ borderColor: '#0984E3', color: '#0984E3' }}>
+              {testing ? '...' : '🔊 测试发音'}
+            </button>
+            <button onClick={handleInstall}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white border font-bold"
+              style={{ borderColor: '#00B894', color: '#00B894' }}>
+              📦 安装TTS数据
+            </button>
+          </div>
+          {/* 状态显示 */}
+          {ttsStatus && (
+            <div className={`text-xs px-3 py-1.5 rounded-lg font-mono ${ttsStatus.available ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {ttsStatus.available ? '✅ ' : '❌ '}{ttsStatus.reason}
+            </div>
+          )}
+          {/* 日志 */}
+          {logs.length > 0 && (
+            <div className="bg-gray-900 rounded-lg p-2 max-h-40 overflow-y-auto">
+              {logs.map((line, i) => (
+                <div key={i} className="text-xs text-green-400 font-mono leading-relaxed">{line}</div>
+              ))}
+            </div>
+          )}
+          {logs.length === 0 && (
+            <div className="text-xs text-gray-400 text-center py-2">还没有 TTS 调用记录，点击测试按钮开始诊断</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 const LEVELS = [
   { name: '声母上', desc: 'b p m f · d t n l', items: SHENGMU.filter(p => ['b','p','m','f','d','t','n','l'].includes(p.pinyin)) },
@@ -48,6 +136,9 @@ export default function PinyinMap() {
             <div className="h-full rounded-full transition-all" style={{ width: `${(totalLearned/total)*100}%`, background: 'linear-gradient(90deg, #00B894, #00CEC9)' }} />
           </div>
         </div>
+
+        {/* TTS 诊断面板（仅管理员） */}
+        {isAdmin && <TTSDebugPanel />}
 
         <h2 className="text-sm font-bold text-gray-700 mb-3">拼音关卡</h2>
         <div className="flex gap-3 overflow-x-auto pb-3 mb-4" style={{ scrollSnapType: 'x mandatory' }}>
