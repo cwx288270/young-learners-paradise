@@ -1,3 +1,16 @@
+import { TextToSpeech } from '@capacitor-community/text-to-speech'
+
+// TTS 诊断日志（可通过 Chrome DevTools 查看 window.__ttsDiag）
+const ttsDiag: string[] = []
+function ttsLog(msg: string) {
+  const ts = new Date().toISOString().slice(11, 23)
+  const line = `[${ts}] ${msg}`
+  console.log('[TTS]', line)
+  ttsDiag.push(line)
+  if (ttsDiag.length > 100) ttsDiag.shift()
+}
+;(window as any).__ttsDiag = ttsDiag
+
 // 艾宾浩斯复习间隔算法
 // 复习间隔（毫秒）
 const INTERVALS = [
@@ -66,7 +79,6 @@ function getChineseVoice(): SpeechSynthesisVoice | null {
 }
 
 // 确保语音列表已加载（Chrome/Android WebView 异步加载）
-// Android 上可能需要多次尝试
 async function ensureVoices(): Promise<SpeechSynthesisVoice[]> {
   const voices = window.speechSynthesis.getVoices()
   if (voices.length > 0 && !voicesLoaded) {
@@ -76,29 +88,30 @@ async function ensureVoices(): Promise<SpeechSynthesisVoice[]> {
 
   return new Promise(resolve => {
     let attempts = 0
-    const maxAttempts = 20 // 最多等 2 秒
+    const maxAttempts = 20
     const check = () => {
       const v = window.speechSynthesis.getVoices()
       if (v.length > 0) {
         voicesLoaded = true
+        ttsLog(`ensureVoices: got ${v.length} voices after ${attempts * 100}ms`)
         resolve(v)
         return
       }
       attempts++
       if (attempts >= maxAttempts) {
         voicesLoaded = true
-        resolve(v) // 返回空数组
+        ttsLog(`ensureVoices: TIMEOUT after 2s, ${v.length} voices available`)
+        resolve(v)
         return
       }
       setTimeout(check, 100)
     }
-    // 同时监听 voiceschanged 事件
     window.speechSynthesis.onvoiceschanged = () => {
       voicesLoaded = true
       const v = window.speechSynthesis.getVoices()
+      ttsLog(`ensureVoices: onvoiceschanged fired, ${v.length} voices`)
       resolve(v)
     }
-    // 开始轮询
     check()
   })
 }
@@ -108,29 +121,82 @@ function isCapacitor(): boolean {
   return typeof (window as any)?.Capacitor !== 'undefined'
 }
 
+// 检查中文 TTS 是否可用（Android 原生）
+export async function checkChineseTTS(): Promise<{
+  available: boolean
+  reason: string
+  languages?: string[]
+}> {
+  if (!isCapacitor()) {
+    return { available: ('speechSynthesis' in window), reason: 'web fallback' }
+  }
+  try {
+    const result = await TextToSpeech.isLanguageSupported({ lang: 'zh-CN' })
+    ttsLog(`checkChineseTTS: supported=${result.supported}`)
+    if (!result.supported) {
+      // 获取支持的语言列表帮助诊断
+      try {
+        const langs = await TextToSpeech.getSupportedLanguages()
+        ttsLog(`checkChineseTTS: available languages: ${JSON.stringify(langs.languages)}`)
+        return {
+          available: false,
+          reason: `zh-CN 不支持。可用语言: ${(langs.languages || []).join(', ') || '无'}`,
+          languages: langs.languages,
+        }
+      } catch {
+        return { available: false, reason: 'zh-CN 不支持，无法获取语言列表' }
+      }
+    }
+    return { available: true, reason: 'native TTS supports zh-CN' }
+  } catch (err: any) {
+    ttsLog(`checkChineseTTS: error — ${err?.message || err}`)
+    return { available: false, reason: `TTS 检查失败: ${err?.message || err}` }
+  }
+}
+
+// 打开 TTS 语音数据安装界面（Android）
+export async function openTTSInstall(): Promise<void> {
+  if (!isCapacitor()) return
+  try {
+    await TextToSpeech.openInstall()
+    ttsLog('openTTSInstall: opened')
+  } catch (err: any) {
+    ttsLog(`openTTSInstall: error — ${err?.message || err}`)
+  }
+}
+
 // 预热语音引擎 — 在用户首次交互时调用（Android 需要）
 let speechWarmedUp = false
 export async function warmUpSpeech(): Promise<void> {
   if (speechWarmedUp) return
   speechWarmedUp = true
 
+  ttsLog(`warmUpSpeech start: isCapacitor=${isCapacitor()}, hasSpeech=${('speechSynthesis' in window)}`)
+
   if (isCapacitor()) {
-    // Android 原生 TTS：预热即测试一次空语音
     try {
-      const { TextToSpeech } = await import('@capacitor-community/text-to-speech')
       await TextToSpeech.speak({ text: ' ', lang: 'zh-CN', rate: 1.0, pitch: 1.0 })
-    } catch { /* 忽略预热错误 */ }
+      ttsLog('warmUpSpeech: native TTS OK')
+    } catch (err: any) {
+      ttsLog(`warmUpSpeech: native TTS FAILED — ${err?.message || err}`)
+    }
     return
   }
 
   // Web Speech API 预热
-  if (!('speechSynthesis' in window)) return
+  if (!('speechSynthesis' in window)) {
+    ttsLog('warmUpSpeech: speechSynthesis not available')
+    return
+  }
   const utterance = new SpeechSynthesisUtterance('')
   utterance.volume = 0
   try {
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
-  } catch { /* 忽略预热错误 */ }
+    ttsLog('warmUpSpeech: Web Speech warmup OK')
+  } catch (err: any) {
+    ttsLog(`warmUpSpeech: Web Speech warmup FAILED — ${err?.message || err}`)
+  }
 }
 
 export async function speakText(text: string, rate = 0.8): Promise<void> {
@@ -141,29 +207,35 @@ export async function speakText(text: string, rate = 0.8): Promise<void> {
     .replace(/ = /g, '等于')
     .replace(/\?/g, '多少')
 
+  ttsLog(`speakText: "${spoken.slice(0, 30)}" rate=${rate} isCapacitor=${isCapacitor()}`)
+
   // Android/Capacitor：使用原生 TTS（最可靠）
   if (isCapacitor()) {
     try {
-      const { TextToSpeech } = await import('@capacitor-community/text-to-speech')
       await TextToSpeech.speak({
         text: spoken,
         lang: 'zh-CN',
         rate: rate,
         pitch: 1.1,
       })
+      ttsLog('speakText: native TTS OK')
       return
-    } catch (err) {
+    } catch (err: any) {
+      ttsLog(`speakText: native TTS FAILED — ${err?.message || err}`)
       console.warn('Native TTS failed, falling back to Web Speech:', err)
-      // 继续走 Web Speech API fallback
     }
   }
 
   // Web Speech API fallback
-  if (!('speechSynthesis' in window)) return
+  if (!('speechSynthesis' in window)) {
+    ttsLog('speakText: speechSynthesis not available, giving up')
+    return
+  }
   window.speechSynthesis.cancel()
 
   await ensureVoices()
   const voice = getChineseVoice()
+  ttsLog(`speakText: Web Speech voice=${voice?.name || 'none'}, voicesLoaded=${voicesLoaded}`)
 
   const utterance = new SpeechSynthesisUtterance(spoken)
   utterance.lang = 'zh-CN'

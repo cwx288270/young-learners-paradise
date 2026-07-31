@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     // 边到边显示，让 WebView 内容延伸到状态栏和导航栏下方
-    webContentsDebuggingEnabled: false,
+    webContentsDebuggingEnabled: true,
   }
 };
 
